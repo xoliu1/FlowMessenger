@@ -21,3 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "FlowMessenger"
 include ':app'
+include ':AptProcessor'
+include ':FlowMessenger'
