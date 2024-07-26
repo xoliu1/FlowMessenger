@@ -1,10 +1,11 @@
 package com.xoliu.aptprocessor
 
+
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterizedTypeName
-import com.xoliu.flowmessenger.annotations.ExecutionMode
-import com.xoliu.flowmessenger.annotations.Subscribe
+import com.xoliu.aptprocessor.annotations.ExecutionMode
+import com.xoliu.aptprocessor.annotations.Subscribe
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.Modifier
 import javax.lang.model.element.TypeElement
@@ -31,7 +32,7 @@ class CreateMethod(private val typeElement: TypeElement) {
      * @return
      */
     fun generateMethod(): MethodSpec {
-        val subscribedMethod = ClassName.get("com.lucas.annotations", "SubscribedMethod")
+        val subscribedMethod = ClassName.get("com.xoliu.flowmessengers.annotations", "SubscribedMethod")
         val list = ClassName.get("java.util", "List")
         val arrayList = ClassName.get("java.util", "ArrayList")
         val listSubscribeMethods = ParameterizedTypeName.get(list, subscribedMethod)

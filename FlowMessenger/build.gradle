@@ -1,9 +1,48 @@
 plugins {
-    id 'java-library'
-    alias(libs.plugins.jetbrains.kotlin.jvm)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.jetbrains.kotlin.android)
+    id("maven-publish")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+android {
+    namespace 'com.xoliu.flowmessengers'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 24
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation project(':AptProcessor')
+}
+
+afterEvaluate {
+    android.libraryVariants.each {variant->
+        publishing.publications.create(variant.name,MavenPublication){
+            from components.findByName(variant.name)
+            groupId = 'com.xoliu'//自定义
+            artifactId = 'FlowMessenger'//自定义
+            version = '1.0.0'//自定义
+        }
+    }
 }

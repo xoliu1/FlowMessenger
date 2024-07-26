@@ -1,4 +1,4 @@
-package com.xoliu.flowmessenger.annotations
+package com.xoliu.aptprocessor.annotations
 
 import java.lang.reflect.Method
 

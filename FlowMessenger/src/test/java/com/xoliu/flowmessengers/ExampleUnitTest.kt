@@ -1,4 +1,4 @@
-package com.xoliu.flowmessenger
+package com.xoliu.flowmessengers
 
 import org.junit.Test
 

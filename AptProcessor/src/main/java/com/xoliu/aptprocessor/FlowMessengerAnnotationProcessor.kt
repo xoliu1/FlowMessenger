@@ -9,10 +9,10 @@ import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
-import com.xoliu.flowmessenger.annotations.MethodInvoker
-import com.xoliu.flowmessenger.annotations.Subscribe
-import com.xoliu.flowmessenger.annotations.SubscribedMethod
-import com.xoliu.flowmessenger.annotations.Subscription
+import com.xoliu.aptprocessor.annotations.MethodInvoker
+import com.xoliu.aptprocessor.annotations.Subscribe
+import com.xoliu.aptprocessor.annotations.SubscribedMethod
+import com.xoliu.aptprocessor.annotations.Subscription
 import java.io.IOException
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.Filer
@@ -31,7 +31,7 @@ import javax.lang.model.util.Elements
 
 @AutoService(Processor::class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-@SupportedAnnotationTypes("com.xoliu.flowmessenger.annotations.Subscribe")
+@SupportedAnnotationTypes("com.xoliu.flowmessengers.annotations.Subscribe")
 class FlowMessengerAnnotationProcessor : AbstractProcessor() {
     /**
      * 处理注解和环境圆形的进程。
@@ -150,7 +150,7 @@ override fun process(annotations: Set<TypeElement?>?, roundEnv: RoundEnvironment
     // 将静态代码块和之前构建的类信息合并，生成最终的类定义
     val typeSpec = aptMethodFinder.addStaticBlock(codeBlock.build()).build()
     // 生成Java文件并写入文件系统
-    val javaFile = JavaFile.builder("com.xoliu.flowmessenger", typeSpec)
+    val javaFile = JavaFile.builder("com.xoliu.flowmessengers", typeSpec)
         .build()
     try {
         javaFile.writeTo(filer)

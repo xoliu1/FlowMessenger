@@ -1,4 +1,4 @@
-package com.xoliu.flowmessenger.annotations
+package com.xoliu.aptprocessor.annotations
 
 /***
  * Subscription 类表示一个订阅关系，包括订阅者对象（Subscriber）和订阅方法（SubscribedMethod）。
@@ -10,15 +10,15 @@ package com.xoliu.flowmessenger.annotations
  **/
 
 class Subscription(//订阅者类
-    private val subscriber: Any, //订阅者方法类
+    val subscriber: Any, //订阅者方法类
     private val subscribedMethod: SubscribedMethod, // 优先级
     private val priority: Int
 ) : Comparable<Subscription?> {
-    fun getSubscriber(): Any {
+    fun subscriber(): Any {
         return subscriber
     }
 
-    fun getSubscribedMethod(): SubscribedMethod {
+    fun getTheSubscribedMethod(): SubscribedMethod {
         return subscribedMethod
     }
 

@@ -1,4 +1,4 @@
-package com.xoliu.flowmessenger.annotations
+package com.xoliu.aptprocessor.annotations
 
 /***
  * 线程模式的枚举类定义

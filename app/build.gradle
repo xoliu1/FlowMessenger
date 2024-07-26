@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.xoliu.flowmessenger'
+    namespace 'com.xoliu.flowmessengers'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.xoliu.flowmessenger"
+        applicationId "com.xoliu.flowmessengers"
         minSdk 24
         targetSdk 34
         versionCode 1
@@ -33,7 +33,9 @@ android {
 }
 
 dependencies {
-
+    implementation project(':AptProcessor')
+    implementation project(':FlowMessenger')
+    annotationProcessor project(':AptProcessor')
     implementation libs.androidx.core.ktx
     implementation libs.androidx.appcompat
     implementation libs.material
