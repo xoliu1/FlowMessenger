@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     alias(libs.plugins.jetbrains.kotlin.jvm)
+    id 'maven-publish'
 }
 
 java {
@@ -18,4 +19,15 @@ dependencies {
 }
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
+}
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.xoliu'
+            artifactId = 'FlowMessenger-apt-processor'
+            version = '1.0.0'
+
+            from components.java
+        }
+    }
 }

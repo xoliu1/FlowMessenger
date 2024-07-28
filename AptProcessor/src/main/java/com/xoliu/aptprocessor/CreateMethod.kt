@@ -46,22 +46,24 @@ class CreateMethod(private val typeElement: TypeElement) {
         )
         for ((methodName1, executableElement) in methodMap) {
             val parameters = executableElement.parameters
-            val annotation: Subscribe = executableElement.getAnnotation(Subscribe::class.java)
-            val executionMode: ExecutionMode = annotation.exeutionMode
-            val priority: Int = annotation.priority
+            val annotation = executableElement.getAnnotation(Subscribe::class.java)
+            val executionMode = annotation.exeutionMode
+            val priority = annotation.priority
+            val sticky = annotation.sticky // Retrieve sticky attribute
             methodBuilder.addStatement(
-                "subscribedMethods.add(new SubscribedMethod(\$T.class, \$T.class, \$T.\$L, \$L, \$S))",
+                "subscribedMethods.add(new SubscribedMethod(\$T.class, \$T.class, \$T.\$L, \$L, \$S, \$L))",
                 typeElement.asType(),
                 parameters[0]!!.asType(),
                 executionMode.javaClass,
                 executionMode.toString(),
                 priority,
-                methodName
+                sticky.toString() // Add sticky attribute to generated code
             )
         }
         methodBuilder.addStatement("return subscribedMethods")
         return methodBuilder.build()
     }
+
 
     val methodName: Any
         get() = "findMethodsIn" + typeElement.simpleName

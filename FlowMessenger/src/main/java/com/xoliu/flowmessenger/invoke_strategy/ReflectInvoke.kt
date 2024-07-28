@@ -16,22 +16,20 @@ import java.lang.reflect.Method
  * @create 24-7-25
  **/
 
-class ReflectInvoke: MethodInvokeStrategy() {
+class ReflectInvoke : MethodInvokeStrategy() {
     val TAG = "FlowMessenger - ReflectInvoke"
+
     /**
      * 获取这个订阅者类中所有的带{@link Subscribe}的方法
      *
-     * @param subscriber 订阅者类，即通过register将this参数传过来的类，可
-     *                   以是activity、service、fragment、thread等。
+     * @param subscriber 订阅者类，即通过register将this参数传过来的类，可以是activity、service、fragment、thread等。
      */
     override fun getAllSubscribedMethods(subscriber: Any?): List<SubscribedMethod?>? {
-
-
-        //记录订阅者方法参数
+        // 记录订阅者方法参数
         val subscribedMethods: MutableList<SubscribedMethod> = ArrayList()
         val aClass: Class<*> = subscriber!!.javaClass
 
-        //获取所有方法
+        // 获取所有方法
         val declaredMethods = aClass.declaredMethods
         for (declaredMethod in declaredMethods) {
             if (declaredMethod.isAnnotationPresent(Subscribe::class.java)) {
@@ -42,8 +40,8 @@ class ReflectInvoke: MethodInvokeStrategy() {
                 val annotation: Subscribe = declaredMethod.getAnnotation(Subscribe::class.java)
                 val priority: Int = annotation.priority
                 val executionMode: ExecutionMode = annotation.exeutionMode
-                val subscribedMethod =
-                    SubscribedMethod(declaredMethod, parameterType, executionMode, priority)
+                val sticky: Boolean = annotation.sticky // Handle sticky attribute
+                val subscribedMethod = SubscribedMethod(declaredMethod, parameterType, executionMode, priority, sticky)
                 Log.d(TAG, "getAllSubscribedMethods: subscribedMethod=$subscribedMethod")
                 subscribedMethods.add(subscribedMethod)
             }
@@ -55,30 +53,38 @@ class ReflectInvoke: MethodInvokeStrategy() {
         val subscriber = subscription!!.subscriber()
         val subscribedMethod = subscription.getTheSubscribedMethod()
         val method: Method? = subscribedMethod.method
-        when (subscribedMethod.executionMode) {
-            ExecutionMode.INSTANT -> {
-                Log.d(TAG, "invokeMethod: ThreadMode=POSTING")
-                invoke(method, subscriber, event)
-            }
 
-            ExecutionMode.MAIN_THREAD -> {
-                Log.d(TAG, "invokeMethod: ThreadMode=MAIN")
-                mainHandler!!.post { invoke(method, subscriber, event) }
-            }
-
-            ExecutionMode.BACKGROUND_THREAD -> {
-                Log.d(TAG, "invokeMethod: ThreadMode=BACKGROUND")
-                workHander!!.post { invoke(method, subscriber, event) }
+        /**
+         * 获取订阅者方法
+         *
+         * @param subscriber
+         * @param event
+         */
+        if (subscribedMethod.sticky) {
+            invoke(method, subscriber, event)
+        } else {
+            when (subscribedMethod.executionMode) {
+                ExecutionMode.INSTANT -> {
+                    Log.d(TAG, "invokeMethod: ThreadMode=INSTANT")
+                    invoke(method, subscriber, event)
+                }
+                ExecutionMode.MAIN_THREAD -> {
+                    Log.d(TAG, "invokeMethod: ThreadMode=MAIN")
+                    mainHandler!!.post { invoke(method, subscriber, event) }
+                }
+                ExecutionMode.BACKGROUND_THREAD -> {
+                    Log.d(TAG, "invokeMethod: ThreadMode=BACKGROUND")
+                    workHandler!!.post { invoke(method, subscriber, event) }
+                }
             }
         }
     }
 
-    fun invoke(method: Method?, subscriber: Any?, event: Any?){
+    private fun invoke(method: Method?, subscriber: Any?, event: Any?) {
         try {
             method!!.invoke(subscriber, event)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
-
 }

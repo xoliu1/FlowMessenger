@@ -6,5 +6,6 @@ package com.xoliu.aptprocessor.annotations
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Subscribe(
     val exeutionMode: ExecutionMode = ExecutionMode.INSTANT,//默认为同步执行
-    val priority: Int = 0//优先级默认为0
+    val priority: Int = 0,//优先级默认为0
+    val sticky: Boolean = false // 增加黏性事件
 )

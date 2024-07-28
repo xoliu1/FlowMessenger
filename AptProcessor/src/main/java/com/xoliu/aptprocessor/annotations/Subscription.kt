@@ -14,6 +14,7 @@ class Subscription(//订阅者类
     private val subscribedMethod: SubscribedMethod, // 优先级
     private val priority: Int
 ) : Comparable<Subscription?> {
+    val isSticky: Boolean = subscribedMethod.sticky
     fun subscriber(): Any {
         return subscriber
     }
@@ -44,9 +45,6 @@ class Subscription(//订阅者类
     }
 
     override fun toString(): String {
-        return "Subscription{" +
-                "subscriber=" + subscriber +
-                ", subscribedMethod=" + subscribedMethod +
-                '}'
+        return "Subscription(subscriber=$subscriber, subscribedMethod=$subscribedMethod, priority=$priority, isSticky=$isSticky)"
     }
 }

@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.xoliu.aptprocessor.annotations.ExecutionMode
 import com.xoliu.aptprocessor.annotations.Subscribe
-import com.xoliu.flowmessengers.R
 import com.xoliu.flowmessengers.Event.PriorityEvent
 import com.xoliu.flowmessengers.Event.ViewEvent
 import com.xoliu.flowmessengers.Event.WorkEvent
@@ -29,12 +28,12 @@ class MainActivity : AppCompatActivity() {
 
         // 测试：发送WorkEvent
         findViewById<View>(R.id.btn_send1).setOnClickListener { v: View? ->
-            FlowMessenger.getDefault().post(WorkEvent(5))
+            FlowMessenger.getInstance().emitEvent(WorkEvent(5))
         }
 
         // 测试：主线程发送ViewEvent
         findViewById<View>(R.id.btn_send2).setOnClickListener { v: View? ->
-            FlowMessenger.getDefault().post(ViewEvent("主线程测试文字"))
+            FlowMessenger.getInstance().emitEvent(ViewEvent("主线程测试文字"))
         }
 
         // 测试：子线程发送ViewEvent
@@ -42,26 +41,27 @@ class MainActivity : AppCompatActivity() {
             object : Thread() {
                 override fun run() {
                     super.run()
-                    FlowMessenger.getDefault().post(ViewEvent("子线程测试文字"))
+                    FlowMessenger.getInstance().emitEvent(ViewEvent("子线程测试文字"))
                 }
             }.start()
         }
 
         // 解注册bus
         findViewById<View>(R.id.btn_send4).setOnClickListener { v: View? ->
-            FlowMessenger.getDefault().unregister(this@MainActivity)
+            FlowMessenger.getInstance().unregister(this@MainActivity)
         }
         // 注册bus
         findViewById<View>(R.id.btn_send5).setOnClickListener { v: View? ->
-            FlowMessenger.getDefault().register(this@MainActivity)
+            FlowMessenger.getInstance().register(this@MainActivity)
         }
         // 事件优先级测试
         findViewById<View>(R.id.btn_send6).setOnClickListener { v: View? ->
-            FlowMessenger.getDefault().post(PriorityEvent())
+            FlowMessenger.getInstance().emitEvent(PriorityEvent())
         }
     }
 
-    @Subscribe(priority = 1)
+    //黏性事件测试
+    @Subscribe(priority = 1, sticky = true)
     fun onEvent(event: WorkEvent) {
         runOnUiThread {
             Toast.makeText(
@@ -121,7 +121,7 @@ class MainActivity : AppCompatActivity() {
      * 方法一：以反射调用
      */
     fun registryByReflect() {
-        FlowMessenger.getDefault().register(this@MainActivity)
+        FlowMessenger.getInstance().register(this@MainActivity)
     }
 
     /**
@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        FlowMessenger.getDefault().unregister(this)
+        FlowMessenger.getInstance().unregister(this)
     }
 
 

@@ -12,10 +12,6 @@ class FlowMessengerBuilder {
     }
 
     fun build(): FlowMessenger {
-        val flowMessenger = FlowMessenger(this)
-        if (FlowMessenger.instance == null) {
-            FlowMessenger.instance = flowMessenger
-        }
-        return flowMessenger
+        return FlowMessenger.getInstance(this)
     }
 }

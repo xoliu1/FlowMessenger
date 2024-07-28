@@ -2,6 +2,7 @@ package com.xoliu.flowmessengers.MsgHub
 
 
 import android.util.Log
+import com.xoliu.aptprocessor.annotations.Subscribe
 import com.xoliu.aptprocessor.annotations.Subscription
 import com.xoliu.flowmessenger.FlowMessengerBuilder
 import com.xoliu.flowmessenger.invoke_strategy.AptAnnotationInvoke
@@ -11,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 
-class FlowMessenger(builder: FlowMessengerBuilder? = DEFAULT_BUILDER) {
+class FlowMessenger private constructor(builder: FlowMessengerBuilder) {
     private val TAG = "FlowMessenger"
 
     var invokeStrategy: MethodInvokeStrategy
@@ -29,49 +30,42 @@ class FlowMessenger(builder: FlowMessengerBuilder? = DEFAULT_BUILDER) {
      * value: 该Subscriber中所有注册event的方法
      */
     private val typesBySubscriber = ConcurrentHashMap<Any, MutableList<Class<*>>>()
+    // 存储粘性事件
+    private val stickyEvents = ConcurrentHashMap<Class<*>, Any>()
+
+
+    init {
+        invokeStrategy = builder.methodInvoker?.let { AptAnnotationInvoke(it) } ?: ReflectInvoke()
+    }
 
     companion object {
-        var instance: FlowMessenger? = null
-        private val DEFAULT_BUILDER = FlowMessengerBuilder()
+        @Volatile
+        private var instance: FlowMessenger? = null
 
         /**
-         * 单例
+         * 获取单例实例
          *
-         * @return
+         * @return FlowMessenger单例
          */
-        fun getDefault(): FlowMessenger {
-            if (instance == null) {
-                synchronized(FlowMessenger::class.java) {
-                    if (instance == null) {
-                        instance = FlowMessenger()
-                    }
-                }
+        fun getInstance(builder: FlowMessengerBuilder = FlowMessengerBuilder()): FlowMessenger {
+            return instance ?: synchronized(this) {
+                instance ?: FlowMessenger(builder).also { instance = it }
             }
-            return instance!!
         }
 
+        /**
+         * 返回一个新的 FlowMessengerBuilder
+         */
         fun builder(): FlowMessengerBuilder {
             return FlowMessengerBuilder()
         }
     }
-
-    init {
-        invokeStrategy = if (builder?.methodInvoker != null) {
-            // 注解处理器获取订阅者方法和调用
-            AptAnnotationInvoke(builder.methodInvoker!!)
-        } else {
-            // 反射获取订阅者方法和反射调用方法
-            ReflectInvoke()
-        }
-    }
-
     /**
      * 注册subscriber到FlowMessenger，并获取其所有加了{@link Subscribe} 的方法，并放入集合中
      *
      * @param subscriber 订阅者类，即通过register将this参数传过来的类，可以是activity、service、fragment、thread等。
      */
     fun register(subscriber: Any) {
-        // 检查订阅者是否已经注册
         if (typesBySubscriber.containsKey(subscriber)) {
             Log.w(TAG, "Subscriber is already registered.")
             return
@@ -85,38 +79,46 @@ class FlowMessenger(builder: FlowMessengerBuilder? = DEFAULT_BUILDER) {
 
         for (subscribedMethod in allSubscribedMethods) {
             val eventType = subscribedMethod!!.eventType
-            if (eventType!=null){
+            if (eventType != null) {
+
                 val subscriptions = subscriptionsByEventType.getOrPut(eventType) { CopyOnWriteArrayList() }
-                // 以下为priority逻辑，在此处排序添加
-                // 获取订阅方法的优先级
                 val priority = subscribedMethod.priority
-                // 创建新的 Subscription 实例
                 val newSubscription = Subscription(subscriber, subscribedMethod, priority)
-                // 将新订阅插入到适当的位置以保持优先级顺序
+                if (subscribedMethod.sticky){
+                    stickyEvents[eventType] = newSubscription
+                }
+                //Log.d("TAG123", "$stickyEvents")
                 val index = subscriptions.indexOfFirst { newSubscription.compareTo(it) > 0 }
                 if (index >= 0) {
                     subscriptions.add(index, newSubscription)
                 } else {
                     subscriptions.add(newSubscription)
                 }
-                // 至此完成优先级的排序
-
-                printSubscriptionsByEventType(subscriptionsByEventType)
-                // 获取这个订阅者类中记录的所有的eventType类型
                 val eventTypesInSubscriber = typesBySubscriber.getOrPut(subscriber) { mutableListOf() }
                 eventTypesInSubscriber.add(eventType)
-            }else{
+                // 处理粘性事件
+                stickyEvents[eventType]?.let {
+                    val subscriptions = subscriptionsByEventType[eventType]
+                    //Log.d("TAG12345", "$subscriptions")
+                    subscriptions?.forEach { subscription ->
+                        invokeStrategy.invokeMethod(subscription, map[eventType])
+                    }
+                }
+            } else {
                 Log.d(TAG, "register: eventType为空！")
             }
 
         }
-        printTypesBySubscriber(typesBySubscriber, subscriber)
+        printSubscriptionsByEventType(subscriptionsByEventType)
+        //printTypesBySubscriber(typesBySubscriber, subscriber)
     }
+
 
     private fun printSubscriptionsByEventType(subscriptionsByEventType: Map<Class<*>, CopyOnWriteArrayList<Subscription>>) {
         for ((eventType, subscriptions) in subscriptionsByEventType) {
             for (subscription in subscriptions) {
-                Log.d(TAG, "printSubscriptionsByEventType: eventType=${eventType.name} subscription=$subscription")
+                Log.d(TAG, "printSubscriptionsByEventType: eventType=${eventType.name} \n" +
+                        "subscription=$subscription")
             }
         }
     }
@@ -131,21 +133,27 @@ class FlowMessenger(builder: FlowMessengerBuilder? = DEFAULT_BUILDER) {
     }
 
     /**
-     * 发送event消息到订阅者 处理方法
+     * 发送event消息到订阅者处理方法
      *
      * @param event
      */
-    fun post(event: Any) {
+    val map:MutableMap<Class<*>, Any> = HashMap()
+    fun emitEvent(event: Any) {
         if (subscriptionsByEventType.isEmpty()) {
             Log.e(TAG, "post: no any eventbus registered named ${event::class.java}")
             return
         }
-
-        Log.d(TAG, "event.getClass()=${event::class.java.name}")
-        val subscriptions = subscriptionsByEventType[event::class.java]
+        val eventType = event::class.java
+       map[eventType] = event
+        //Log.d("TAG1234", "$eventType")//class com.xoliu.flowmessengers.Event.WorkEvent
+        val subscriptions = subscriptionsByEventType[eventType]
+        //Log.d("TAG12345", "$subscriptions")
         subscriptions?.forEach { subscription ->
+            //Log.d("TAG1234", "$event")//com.xoliu.flowmessengers.Event.WorkEvent@ff58711
             invokeStrategy.invokeMethod(subscription, event)
         }
+
+
     }
 
     /**
@@ -166,6 +174,17 @@ class FlowMessenger(builder: FlowMessengerBuilder? = DEFAULT_BUILDER) {
         subscriptions?.removeIf { it.subscriber == subscriber }
         if (subscriptions.isNullOrEmpty()) {
             subscriptionsByEventType.remove(eventType)
+            stickyEvents.remove(eventType)
         }
+    }
+
+    /**
+     * 发送粘性事件（弃用）
+     *
+     * @param event
+     */
+    fun postSticky(event: Any) {
+        stickyEvents[event::class.java] = event
+        emitEvent(event)
     }
 }

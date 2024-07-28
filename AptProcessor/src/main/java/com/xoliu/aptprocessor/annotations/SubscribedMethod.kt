@@ -19,7 +19,8 @@ data class SubscribedMethod(
     val executionMode: ExecutionMode,
     val priority: Int,
     val methodName: String? = null,
-    val subscriberClass: Class<*>? = null
+    val subscriberClass: Class<*>? = null,
+    val sticky: Boolean = false
 ) {
 
     constructor(
@@ -30,6 +31,14 @@ data class SubscribedMethod(
     ) : this(method, eventType, executionMode, priority, null, null)
 
     constructor(
+        method: Method,
+        eventType: Class<*>,
+        executionMode: ExecutionMode,
+        priority: Int,
+        sticky: Boolean
+    ) : this(method, eventType, executionMode, priority, null, null, sticky)
+
+    constructor(
         subscriberClass: Class<*>,
         eventType: Class<*>,
         executionMode: ExecutionMode,
@@ -38,6 +47,6 @@ data class SubscribedMethod(
     ) : this(null, eventType, executionMode, priority, methodName, subscriberClass)
 
     override fun toString(): String {
-        return "SubscribedMethod(method=$method, eventType=$eventType, threadMode=$executionMode, priority=$priority)"
+        return "SubscribedMethod(method=$method, eventType=$eventType, threadMode=$executionMode, priority=$priority,sticky=$sticky)"
     }
 }

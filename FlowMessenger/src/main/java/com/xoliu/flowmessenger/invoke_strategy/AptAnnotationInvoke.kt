@@ -43,7 +43,7 @@ class AptAnnotationInvoke(methodInvoker: MethodInvoker) : MethodInvokeStrategy()
 
                 ExecutionMode.BACKGROUND_THREAD -> {
                     Log.d(TAG, "invokeMethod: ThreadMode=BACKGROUND")
-                    workHander!!.post {
+                    workHandler!!.post {
                         if (event != null) {
                             invoke(methodName, subscriber, event)
                         }

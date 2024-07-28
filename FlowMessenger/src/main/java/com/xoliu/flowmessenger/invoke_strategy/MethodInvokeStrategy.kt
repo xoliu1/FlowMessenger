@@ -22,12 +22,12 @@ abstract class MethodInvokeStrategy : MethodInvoker {
 
     var mainHandler: Handler? = null
 
-    var workHander: Handler? = null
+    var workHandler: Handler? = null
 
     constructor(){
         handlerThread.start()
         mainHandler = Handler(Looper.getMainLooper())
-        workHander = Handler(handlerThread.looper)
+        workHandler = Handler(handlerThread.looper)
     }
 
 

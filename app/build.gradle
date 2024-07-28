@@ -35,6 +35,7 @@ android {
 dependencies {
     implementation project(':AptProcessor')
     implementation project(':FlowMessenger')
+    //implementation 'com.github.xoliu1:FlowMessenger:1.0.0'
     annotationProcessor project(':AptProcessor')
     implementation libs.androidx.core.ktx
     implementation libs.androidx.appcompat
